@@ -1,8 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-import AppShell from "@/components/app-shell";
-
-import DashboardClient, { type ClientOption, type DashboardRequest } from "./dashboard-client";
+import DashboardConsole, { type ClientOption, type DashboardRequest } from "./dashboard-console";
 
 export const dynamic = "force-dynamic";
 
@@ -54,14 +52,5 @@ export default async function DashboardPage() {
     });
   }
 
-  return (
-    <AppShell>
-      {error && (
-        <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-600 backdrop-blur-sm ring-1 ring-inset ring-red-500/10 dark:text-red-300">
-          Failed to load document requests. Please check the database setup.
-        </div>
-      )}
-      <DashboardClient requests={requests} clients={clients} />
-    </AppShell>
-  );
+  return <DashboardConsole requests={requests} clients={clients} loadError={Boolean(error)} />;
 }

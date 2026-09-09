@@ -67,45 +67,45 @@ export default function UploadForm({ requestId }: UploadFormProps) {
   };
 
   return (
-    <div className="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-      <h2 className="text-lg font-semibold">Upload your document</h2>
-      <p className="mt-1 text-sm text-zinc-500">
+    <div className="fn-upload-divider">
+      <h2 className="fn-card-title">Upload your document</h2>
+      <p className="fn-card-sub">
         Select the document requested above and click upload. It will be stored securely for the forwarder.
       </p>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      <div className="fn-actions-row">
         <input
           ref={inputRef}
           type="file"
           accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
           onChange={handleFileChange}
-          className="block w-full text-sm text-zinc-700 file:mr-4 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-4 file:py-2.5 file:text-sm file:font-semibold file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-300 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
+          className="fn-input file:mr-3 file:rounded file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:bg-[#1e1b4b] file:text-[#a5b4fc] hover:file:bg-[#312e81]"
         />
         <button
           type="button"
           onClick={handleUpload}
           disabled={uploading || !file}
-          className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="cta"
         >
           {uploading ? "Uploading..." : "Upload Document"}
         </button>
       </div>
 
       {file && !uploading && (
-        <p className="mt-3 text-sm text-zinc-500">
-          Selected file: <span className="font-medium text-zinc-700 dark:text-zinc-200">{file.name}</span>
+        <p className="channel mt-3">
+          Selected file: <span className="fn-truncate">{file.name}</span>
         </p>
       )}
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950 dark:text-red-300">
+        <p className="fn-banner-error mt-3">
           {error}
         </p>
       )}
 
       {successMessage && (
-        <div className="mt-3 rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-950 dark:text-green-300">
-          <p className="font-semibold">Upload successful</p>
+        <div className="fn-banner-success mt-3">
+          <p className="fn-success-head">Upload successful</p>
           <p className="mt-1">{successMessage}</p>
         </div>
       )}

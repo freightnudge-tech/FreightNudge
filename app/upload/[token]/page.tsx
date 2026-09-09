@@ -20,14 +20,14 @@ function formatDeadline(deadline: string): string {
   });
 }
 
-function getStatusBadgeClass(status: string): string {
+function getStatusTone(status: string): string {
   if (status === "uploaded") {
-    return "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
+    return "green";
   }
   if (status === "pending") {
-    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+    return "amber";
   }
-  return "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300";
+  return "slate";
 }
 
 export default async function UploadPage({ params }: UploadPageProps) {
@@ -42,14 +42,14 @@ export default async function UploadPage({ params }: UploadPageProps) {
   if (error) {
     console.error("Failed to fetch document request:", error);
     return (
-      <main className="flex flex-1 items-center justify-center p-8">
-        <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <h1 className="text-2xl font-semibold">Something went wrong</h1>
-          <p className="mt-2 text-zinc-500">
-            We could not load the document request. Please try again later.
-          </p>
-        </div>
-      </main>
+      <div className="fn-shell fn-stack">
+        <main className="fn-center">
+          <div className="fn-card" style={{ maxWidth: 560, width: "100%", textAlign: "center" }}>
+            <h1 className="fn-card-title">Something went wrong</h1>
+            <p className="fn-card-sub">We could not load the document request. Please try again later.</p>
+          </div>
+        </main>
+      </div>
     );
   }
 
@@ -76,34 +76,47 @@ export default async function UploadPage({ params }: UploadPageProps) {
   const statusLabel = typeof requestRecord.status === "string" ? requestRecord.status : "unknown";
 
   return (
-    <main className="flex flex-1 items-center justify-center p-8">
-      <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <h1 className="text-2xl font-semibold">Upload Document</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          A forwarder has requested the following document from you. Please upload it before the deadline.
-        </p>
+    <div className="fn-shell fn-stack">
+      <main className="fn-center">
+        <div className="fn-card" style={{ maxWidth: 640, width: "100%" }}>
+          <div className="brand">
+            <span className="brand-mark">F</span>
+            <span>
+              <strong>
+                Freight<span>Nudge</span>
+              </strong>
+              <small>Secure document upload</small>
+            </span>
+          </div>
 
-        <dl className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Document</dt>
-            <dd className="mt-1 break-words font-medium">{requestRecord.document_name}</dd>
-          </div>
-          <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Status</dt>
-            <dd className="mt-1">
-              <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${getStatusBadgeClass(statusLabel)}`}>
-                {statusLabel}
-              </span>
-            </dd>
-          </div>
-          <div className="rounded-xl bg-zinc-50 p-4 dark:bg-zinc-900 sm:col-span-2">
-            <dt className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Deadline</dt>
-            <dd className="mt-1 font-medium">{deadlineLabel}</dd>
-          </div>
-        </dl>
+          <h1 className="fn-card-title" style={{ marginTop: 14 }}>Upload Document</h1>
+          <p className="fn-card-sub">
+            A forwarder has requested the following document from you. Please upload it before the deadline.
+          </p>
 
-        <UploadForm requestId={requestRecord.id} />
-      </div>
-    </main>
+          <dl className="fn-row-2col" style={{ marginTop: 20 }}>
+            <div className="fn-tile">
+              <dt>Document</dt>
+              <dd>{requestRecord.document_name}</dd>
+            </div>
+            <div className="fn-tile">
+              <dt>Status</dt>
+              <dd>
+                <span className={`badge ${getStatusTone(statusLabel)}`}>
+                  <i />
+                  {statusLabel}
+                </span>
+              </dd>
+            </div>
+            <div className="fn-tile" style={{ gridColumn: "1 / -1" }}>
+              <dt>Deadline</dt>
+              <dd className="channel">{deadlineLabel}</dd>
+            </div>
+          </dl>
+
+          <UploadForm requestId={requestRecord.id} />
+        </div>
+      </main>
+    </div>
   );
 }

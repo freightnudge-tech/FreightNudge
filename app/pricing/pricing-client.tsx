@@ -72,103 +72,67 @@ export default function PricingClient() {
   const [annual, setAnnual] = useState(true);
 
   return (
-    <div className="relative overflow-hidden">
-      <div aria-hidden="true" className="pointer-events-none absolute -top-40 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-500/15" />
+    <>
+      <div className="mk-head">
+        <p className="kicker">Pricing</p>
+        <h1 className="mk-title">Simple plans that scale with your shipments</h1>
+        <p className="mk-sub">Start free for 14 days. No credit card required, cancel anytime.</p>
 
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400">Pricing</p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl dark:text-white">
-            Simple plans that scale with your shipments
-          </h1>
-          <p className="mt-4 text-lg leading-7 text-neutral-500 dark:text-neutral-400">
-            Start free for 14 days. No credit card required, cancel anytime.
-          </p>
-
-          <div className="mt-10 flex items-center justify-center gap-4">
-            <span className={`text-sm font-medium transition-colors duration-200 ${!annual ? "text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-neutral-400"}`}>
-              Monthly
-            </span>
-            <Switch.Root
-              checked={annual}
-              onCheckedChange={setAnnual}
-              aria-label="Toggle annual billing"
-              className="relative h-7 w-12 rounded-full bg-neutral-200 shadow-[inset_0_1px_3px_rgba(0,0,0,0.08)] transition-colors duration-200 ease-out data-[state=checked]:bg-indigo-600 dark:bg-zinc-700"
-            >
-              <Switch.Thumb className="block h-5 w-5 translate-x-1 rounded-full bg-white shadow-md transition-transform duration-200 ease-out will-change-transform data-[state=checked]:translate-x-6" />
-            </Switch.Root>
-            <span className={`flex items-center text-sm font-medium transition-colors duration-200 ${annual ? "text-neutral-900 dark:text-white" : "text-neutral-500 dark:text-neutral-400"}`}>
-              Annual
-              <span className="ml-2 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-500/20 dark:text-emerald-400">
-                Save 20%
-              </span>
-            </span>
-          </div>
+        <div className="mk-toggle">
+          <span className={`mk-toggle-label ${!annual ? "on" : ""}`}>Monthly</span>
+          <Switch.Root
+            checked={annual}
+            onCheckedChange={setAnnual}
+            aria-label="Toggle annual billing"
+            className="mk-switch"
+          >
+            <Switch.Thumb className="mk-switch-thumb" />
+          </Switch.Root>
+          <span className={`mk-toggle-label ${annual ? "on" : ""}`}>
+            Annual
+            <span className="fn-pill-green ml-2">Save 20%</span>
+          </span>
         </div>
+      </div>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {TIERS.map((tier) => {
-            const price = annual ? tier.annual : tier.monthly;
-            return (
-              <div
-                key={tier.name}
-                className={`relative flex flex-col rounded-2xl border p-7 transition-all duration-300 ease-out ${
-                  tier.popular
-                    ? "border-indigo-500/30 bg-gradient-to-b from-indigo-500/[0.06] to-white shadow-[0_8px_30px_rgba(99,102,241,0.15)] ring-1 ring-inset ring-indigo-500/20 dark:from-indigo-500/10 dark:to-zinc-900"
-                    : "border-neutral-200/60 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:border-zinc-800 dark:bg-zinc-900"
-                }`}
-              >
-                {tier.popular && (
-                  <span className="absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-3.5 py-1 text-xs font-semibold text-white shadow-[0_4px_14px_rgba(99,102,241,0.4)]">
-                    <Sparkles className="h-3 w-3" />
-                    Most popular
-                  </span>
+      <div className="fn-tier-grid">
+        {TIERS.map((tier) => {
+          const price = annual ? tier.annual : tier.monthly;
+          return (
+            <div key={tier.name} className={`fn-tier ${tier.popular ? "popular" : ""}`}>
+              {tier.popular && (
+                <span className="fn-tier-badge">
+                  <Sparkles />
+                  Most popular
+                </span>
+              )}
+              <h2 className="fn-tier-name">{tier.name}</h2>
+              <p className="fn-tier-tag">{tier.tagline}</p>
+              <div className="fn-price">
+                {price === null ? (
+                  <strong>Custom</strong>
+                ) : (
+                  <>
+                    <strong>${price}</strong>
+                    <span>/ mo{annual ? ", billed annually" : ""}</span>
+                  </>
                 )}
-                <h2 className="text-lg font-bold text-neutral-900 dark:text-white">{tier.name}</h2>
-                <p className="mt-1.5 min-h-10 text-sm leading-5 text-neutral-500 dark:text-neutral-400">{tier.tagline}</p>
-                <div className="mt-5 flex items-baseline gap-1.5">
-                  {price === null ? (
-                    <span className="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">Custom</span>
-                  ) : (
-                    <>
-                      <span className="text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">${price}</span>
-                      <span className="text-sm text-neutral-500 dark:text-neutral-400">/ mo{annual ? ", billed annually" : ""}</span>
-                    </>
-                  )}
-                </div>
-                <a
-                  href="#"
-                  className={`mt-6 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.98] ${
-                    tier.popular
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-[0_4px_14px_rgba(99,102,241,0.35)] ring-1 ring-inset ring-white/20 hover:shadow-[0_8px_30px_rgba(99,102,241,0.45)] hover:brightness-105"
-                      : "border border-neutral-200/60 bg-white text-neutral-800 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:bg-neutral-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-neutral-100 dark:hover:bg-zinc-800"
-                  }`}
-                >
-                  {tier.cta}
-                </a>
-                <ul className="mt-7 space-y-3 border-t border-neutral-200/60 pt-6 dark:border-zinc-800">
-                  {tier.features.map((feature) => (
-                    <li key={feature.label} className="flex items-start gap-3 text-sm">
-                      {feature.included ? (
-                        <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
-                          <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                        </span>
-                      ) : (
-                        <span className="mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-zinc-800">
-                          <Minus className="h-3 w-3 text-neutral-400" />
-                        </span>
-                      )}
-                      <span className={feature.included ? "text-neutral-700 dark:text-neutral-200" : "text-neutral-400 dark:text-neutral-600"}>
-                        {feature.label}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            );
-          })}
-        </div>
-      </section>
-    </div>
+              <a href="#" className={`${tier.popular ? "cta" : "fn-btn-ghost"} fn-cta-block`}>
+                {tier.cta}
+              </a>
+              <ul className="fn-tier-features">
+                {tier.features.map((feature) => (
+                  <li key={feature.label} className={`fn-feature ${feature.included ? "on" : "off"}`}>
+                    <i>{feature.included ? <Check /> : <Minus />}</i>
+                    {feature.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }

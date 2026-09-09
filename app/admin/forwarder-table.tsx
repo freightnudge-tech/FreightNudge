@@ -3,6 +3,8 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Eye, KeyRound, MoreHorizontal, ShieldCheck, Trash2 } from "lucide-react";
 
+import { Badge } from "@/components/console-bits";
+
 type ForwarderStatus = "active" | "pending" | "suspended";
 
 type Forwarder = {
@@ -24,10 +26,10 @@ const MOCK_FORWARDERS: Forwarder[] = [
   { id: 6, name: "Velocity Shipping", email: "ops@velocityship.com", plan: "Pro", requests: 761, status: "active", joined: "May 22, 2026" },
 ];
 
-const STATUS_BADGE: Record<ForwarderStatus, string> = {
-  active: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-400",
-  pending: "bg-amber-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-400",
-  suspended: "bg-rose-500/10 text-rose-600 ring-rose-500/20 dark:text-rose-400",
+const STATUS_TONE: Record<ForwarderStatus, string> = {
+  active: "green",
+  pending: "amber",
+  suspended: "rose",
 };
 
 const STATUS_LABEL: Record<ForwarderStatus, string> = {
@@ -36,42 +38,31 @@ const STATUS_LABEL: Record<ForwarderStatus, string> = {
   suspended: "Suspended",
 };
 
-const MENU_ITEM =
-  "flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 outline-none transition-colors duration-150 data-[highlighted]:bg-neutral-100 data-[highlighted]:text-neutral-900 dark:text-neutral-200 dark:data-[highlighted]:bg-zinc-800 dark:data-[highlighted]:text-white";
-
 function RowActions() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button
-          type="button"
-          aria-label="Open actions"
-          className="rounded-lg p-2 text-neutral-400 transition-all duration-200 ease-out hover:bg-neutral-100 hover:text-neutral-700 data-[state=open]:bg-neutral-100 dark:hover:bg-zinc-800 dark:hover:text-neutral-200 dark:data-[state=open]:bg-zinc-800"
-        >
-          <MoreHorizontal className="h-4 w-4" />
+        <button type="button" aria-label="Open actions" className="row-action">
+          <MoreHorizontal />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="end"
-          sideOffset={6}
-          className="z-50 min-w-[190px] rounded-xl border border-neutral-200/60 bg-white/95 p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ring-1 ring-inset ring-white/40 backdrop-blur-md dark:border-zinc-700/60 dark:bg-zinc-900/95"
-        >
-          <DropdownMenu.Item className={MENU_ITEM}>
-            <Eye className="h-4 w-4 text-neutral-400" />
+        <DropdownMenu.Content align="end" sideOffset={6} className="fn-menu-content">
+          <DropdownMenu.Item className="fn-menu-item">
+            <Eye />
             View details
           </DropdownMenu.Item>
-          <DropdownMenu.Item className={MENU_ITEM}>
-            <KeyRound className="h-4 w-4 text-neutral-400" />
+          <DropdownMenu.Item className="fn-menu-item">
+            <KeyRound />
             Reset password
           </DropdownMenu.Item>
-          <DropdownMenu.Item className={MENU_ITEM}>
-            <ShieldCheck className="h-4 w-4 text-neutral-400" />
+          <DropdownMenu.Item className="fn-menu-item">
+            <ShieldCheck />
             Toggle suspension
           </DropdownMenu.Item>
-          <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-neutral-200/70 dark:bg-zinc-700/70" />
-          <DropdownMenu.Item className="flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-rose-600 outline-none transition-colors duration-150 data-[highlighted]:bg-rose-50 dark:text-rose-400 dark:data-[highlighted]:bg-rose-500/10">
-            <Trash2 className="h-4 w-4" />
+          <DropdownMenu.Separator className="fn-menu-separator" />
+          <DropdownMenu.Item className="fn-menu-item danger">
+            <Trash2 />
             Remove forwarder
           </DropdownMenu.Item>
         </DropdownMenu.Content>
@@ -82,55 +73,61 @@ function RowActions() {
 
 export default function ForwarderTable() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-200/60 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex items-center justify-between gap-4 px-6 py-5">
+    <section className="tracker">
+      <div className="section-head">
         <div>
-          <h2 className="text-base font-bold text-neutral-900 dark:text-white">Onboarded forwarders</h2>
-          <p className="mt-0.5 text-sm text-neutral-500 dark:text-neutral-400">Manage accounts, plans and access.</p>
+          <p className="kicker">Platform operations</p>
+          <h2>Onboarded forwarders</h2>
         </div>
-        <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600 dark:bg-zinc-800 dark:text-neutral-300">
-          {MOCK_FORWARDERS.length} total
-        </span>
+        <div className="head-actions">
+          <span className="pill">{MOCK_FORWARDERS.length} total</span>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-left text-sm">
+      <div className="table-wrap">
+        <table>
           <thead>
-            <tr className="border-y border-neutral-200/60 bg-neutral-50/60 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-neutral-400">
-              <th className="px-6 py-3.5">Forwarder</th>
-              <th className="px-6 py-3.5">Plan</th>
-              <th className="px-6 py-3.5">Requests</th>
-              <th className="px-6 py-3.5">Status</th>
-              <th className="px-6 py-3.5">Joined</th>
-              <th className="px-6 py-3.5 text-right">Actions</th>
+            <tr>
+              <th>Forwarder</th>
+              <th>Plan</th>
+              <th>Requests</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {MOCK_FORWARDERS.map((forwarder) => (
-              <tr
-                key={forwarder.id}
-                className="border-b border-neutral-200/50 transition-colors duration-150 last:border-0 hover:bg-neutral-50/70 dark:border-zinc-800/60 dark:hover:bg-zinc-800/30"
-              >
-                <td className="px-6 py-4">
-                  <p className="font-semibold text-neutral-900 dark:text-white">{forwarder.name}</p>
-                  <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{forwarder.email}</p>
+              <tr key={forwarder.id}>
+                <td>
+                  <div className="shipment">
+                    <span>
+                      <b>{forwarder.name}</b>
+                      <small>{forwarder.email}</small>
+                    </span>
+                  </div>
                 </td>
-                <td className="px-6 py-4 font-medium text-neutral-600 dark:text-neutral-300">{forwarder.plan}</td>
-                <td className="px-6 py-4 tabular-nums text-neutral-600 dark:text-neutral-300">{forwarder.requests.toLocaleString("en-US")}</td>
-                <td className="px-6 py-4">
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold shadow-[0_0_10px_rgba(0,0,0,0.05)] ring-1 ring-inset ${STATUS_BADGE[forwarder.status]}`}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                    {STATUS_LABEL[forwarder.status]}
-                  </span>
+                <td>{forwarder.plan}</td>
+                <td>{forwarder.requests.toLocaleString("en-US")}</td>
+                <td>
+                  <Badge tone={STATUS_TONE[forwarder.status]}>{STATUS_LABEL[forwarder.status]}</Badge>
                 </td>
-                <td className="px-6 py-4 text-neutral-500 dark:text-neutral-400">{forwarder.joined}</td>
-                <td className="px-6 py-4 text-right">
-                  <RowActions />
+                <td>
+                  <span className="channel">{forwarder.joined}</span>
+                </td>
+                <td>
+                  <div className="row-actions-cell">
+                    <RowActions />
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+      <div className="table-foot">
+        <span>Showing all {MOCK_FORWARDERS.length} onboarded forwarders</span>
+        <span>Manage accounts, plans and access.</span>
+      </div>
+    </section>
   );
 }
