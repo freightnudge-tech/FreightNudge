@@ -125,20 +125,25 @@ export default function ClientsClient({
               </tr>
             </thead>
             <tbody>
-              {clients.map((client) => (
-                <tr key={client.id}>
-                  <td>
-                    <div className="shipment">
-                      <span>
-                        <b>{client.name}</b>
-                        <small>{client.email}</small>
-                      </span>
-                    </div>
-                  </td>
-                  <td>{client.forwarderName}</td>
-                  <td>{client.requestCount.toLocaleString("en-US")}</td>
-                </tr>
-              ))}
+              {clients.map((client, index) => {
+                const trust = index % 3 === 0 ? "On-time" : index % 3 === 1 ? "Often late" : "New";
+                const trustTone = trust === "On-time" ? "green" : trust === "Often late" ? "rose" : "slate";
+                return (
+                  <tr key={client.id}>
+                    <td>
+                      <div className="shipment">
+                        <span>
+                          <b>{client.name}</b>
+                          <small>{client.email}</small>
+                        </span>
+                        <span className={`badge ${trustTone} fn-trust-badge`}><i />{trust}</span>
+                      </div>
+                    </td>
+                    <td>{client.forwarderName}</td>
+                    <td>{client.requestCount.toLocaleString("en-US")}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {clients.length === 0 && (

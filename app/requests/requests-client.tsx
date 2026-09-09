@@ -14,6 +14,12 @@ type RequestsProps = {
 
 export default function RequestsClient({ requests, clientsCount, loadError = false }: RequestsProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2500);
+  }
 
   const counts = useMemo(() => {
     const result: Record<string, number> = {
@@ -92,7 +98,7 @@ export default function RequestsClient({ requests, clientsCount, loadError = fal
             </thead>
             <tbody>
               {filtered.map((request) => (
-                <RequestRow key={request.id} request={request} />
+                <RequestRow key={request.id} request={request} onExportAudit={() => { showToast("Audit trail export — coming soon."); }} />
               ))}
             </tbody>
           </table>
@@ -114,6 +120,12 @@ export default function RequestsClient({ requests, clientsCount, loadError = fal
           )}
         </div>
       </section>
+
+      {toast && (
+        <div className="fn-toast">
+          <span>{toast}</span>
+        </div>
+      )}
     </ConsoleShell>
   );
 }

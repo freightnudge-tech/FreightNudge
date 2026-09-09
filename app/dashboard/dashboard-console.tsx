@@ -60,6 +60,13 @@ export default function DashboardConsole({ requests, clients, loadError = false 
   const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
   const [otherDocs, setOtherDocs] = useState<string[]>([]);
   const [formDeadline, setFormDeadline] = useState("");
+  const [formShipmentId, setFormShipmentId] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(message: string) {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2500);
+  }
 
   const counts = useMemo(() => {
     const result: Record<string, number> = {
@@ -87,6 +94,21 @@ export default function DashboardConsole({ requests, clients, loadError = false 
       return matchesStatus && matchesSearch;
     });
   }, [requests, statusFilter, searchQuery]);
+
+  const shipmentGroups = useMemo(() => {
+    const groups: Record<string, DashboardRequest[]> = {};
+    const ungrouped: DashboardRequest[] = [];
+    for (const request of filtered) {
+      const sid = (request as DashboardRequest & { shipmentId?: string }).shipmentId?.trim();
+      if (sid) {
+        if (!groups[sid]) groups[sid] = [];
+        groups[sid].push(request);
+      } else {
+        ungrouped.push(request);
+      }
+    }
+    return { groups, ungrouped };
+  }, [filtered]);
 
   const attentionCount = counts.expired + counts.rejected;
   const completionRate = counts.total > 0 ? Math.round((counts.completed / counts.total) * 100) : 0;
@@ -395,6 +417,22 @@ export default function DashboardConsole({ requests, clients, loadError = false 
             />
           </div>
 
+          <div className="fn-field">
+            <label htmlFor="create-shipment-id">
+              Shipment ID <span className="fn-optional">optional</span>
+            </label>
+            <input
+              id="create-shipment-id"
+              type="text"
+              value={formShipmentId}
+              onChange={(event) => setFormShipmentId(event.target.value)}
+              placeholder="e.g. SHP-2026-0042"
+              disabled={creating}
+              className="fn-input mono"
+            />
+            <span className="fn-field-hint">Groups related documents together in the tracker.</span>
+          </div>
+
           {createError && <p className="fn-banner-error mt-3.5">{createError}</p>}
 
           {createSuccess && (
@@ -652,11 +690,36 @@ export default function DashboardConsole({ requests, clients, loadError = false 
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((request) => (
-                    <RequestRow key={request.id} request={request} />
+                  {shipmentGroups.ungrouped.map((request) => (
+                    <RequestRow key={request.id} request={request} onExportAudit={() => { showToast("Audit trail export — coming soon."); }} />
                   ))}
                 </tbody>
               </table>
+              {Object.entries(shipmentGroups.groups).map(([shipmentId, groupRequests]) => (
+                <table key={shipmentId} className="fn-shipment-group">
+                  <thead>
+                    <tr className="fn-shipment-head">
+                      <th colSpan={6}>
+                        <span className="fn-shipment-badge">{shipmentId}</span>
+                        <span className="fn-shipment-count">{groupRequests.length} document{groupRequests.length === 1 ? "" : "s"}</span>
+                      </th>
+                    </tr>
+                    <tr>
+                      <th>Client</th>
+                      <th>Request ID</th>
+                      <th>Req. documents</th>
+                      <th>Status</th>
+                      <th>Deadline</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupRequests.map((request) => (
+                      <RequestRow key={request.id} request={request} onExportAudit={() => { showToast("Audit trail export — coming soon."); }} />
+                    ))}
+                  </tbody>
+                </table>
+              ))}
               {filtered.length === 0 && (
                 <div className="fn-empty">
                   <b>No matching document requests</b>
@@ -688,6 +751,12 @@ export default function DashboardConsole({ requests, clients, loadError = false 
           </div>
 
       {createOpen && createModal}
+
+      {toast && (
+        <div className="fn-toast">
+          <span>{toast}</span>
+        </div>
+      )}
     </ConsoleShell>
   );
 }

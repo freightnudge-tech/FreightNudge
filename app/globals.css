@@ -2378,3 +2378,166 @@ body {
   padding-top: 18px;
   border-top: 1px solid #222225;
 }
+
+/* --- Shipment grouping --- */
+.fn-shell .fn-shipment-group {
+  margin-top: 12px;
+  border-top: 2px solid #272D38;
+}
+.fn-shell .fn-shipment-head th {
+  padding: 10px 14px;
+  background: #11151c;
+  text-align: left;
+}
+.fn-shell .fn-shipment-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3B82F6;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+.fn-shell .fn-shipment-count {
+  margin-left: 10px;
+  font-size: 11px;
+  color: #71717a;
+  font-weight: 400;
+}
+
+/* --- Toast --- */
+.fn-shell .fn-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #141922;
+  border: 1px solid #272D38;
+  border-radius: 8px;
+  padding: 12px 20px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: fn-toast-in 0.2s ease-out;
+}
+.fn-shell .fn-toast span {
+  font-size: 13px;
+  color: #E8EAED;
+}
+@keyframes fn-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* --- Form helpers --- */
+.fn-shell .fn-optional {
+  font-size: 10px;
+  font-weight: 500;
+  color: #71717a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 6px;
+}
+.fn-shell .fn-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #71717a;
+}
+.fn-shell .fn-input.mono,
+.fn-shell .mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/* --- Templates --- */
+.fn-shell .fn-template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fn-shell .fn-template-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #11151c;
+  border: 1px solid #272D38;
+  border-radius: 6px;
+}
+.fn-shell .fn-template-row b {
+  display: block;
+  font-size: 13px;
+  color: #E8EAED;
+}
+.fn-shell .fn-template-docs {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #71717a;
+}
+.fn-shell .fn-template-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* --- Nudge cadence --- */
+.fn-shell .fn-nudge-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.fn-shell .fn-nudge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.fn-shell .fn-nudge-label {
+  font-size: 13px;
+  color: #a1a1aa;
+  flex: 1;
+}
+.fn-shell .fn-nudge-select {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+/* --- Trust badge --- */
+.fn-shell .fn-trust-badge {
+  margin-left: auto;
+  font-size: 10px;
+}
+
+/* --- Reports --- */
+.fn-shell .fn-report-coming {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.fn-shell .fn-report-coming li {
+  padding: 10px 12px;
+  background: #11151c;
+  border: 1px solid #272D38;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+.fn-shell .fn-report-coming li::before {
+  content: "› ";
+  color: #3B82F6;
+}
+
+/* --- Disabled button state --- */
+.fn-shell .fn-btn-ghost:disabled,
+.fn-shell .cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.fn-shell .fn-btn-ghost.danger {
+  color: #EF4444;
+}
+.fn-shell .fn-btn-ghost.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+}

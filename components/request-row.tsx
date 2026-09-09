@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Clock, Download, FileText, X } from "lucide-react";
+import { Check, Clock, Download, FileText, History, X } from "lucide-react";
 
 import { Badge } from "@/components/console-bits";
 
@@ -48,7 +48,7 @@ export function formatDeadline(value: string): string {
   });
 }
 
-export function RequestRow({ request }: { request: DashboardRequest }) {
+export function RequestRow({ request, onExportAudit }: { request: DashboardRequest; onExportAudit?: () => void; }) {
   const router = useRouter();
   const [reasonOpen, setReasonOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -179,9 +179,26 @@ export function RequestRow({ request }: { request: DashboardRequest }) {
                 >
                   Review
                 </button>
+                <button
+                  type="button"
+                  className="row-action"
+                  onClick={() => { onExportAudit?.(); }}
+                  aria-label="Export audit trail"
+                  title="Export audit trail"
+                >
+                  <History />
+                </button>
               </>
             ) : (
-              <span className="channel" style={{ opacity: 0.4 }}>—</span>
+              <button
+                type="button"
+                className="row-action"
+                onClick={() => { onExportAudit?.(); }}
+                aria-label="Export audit trail"
+                title="Export audit trail"
+              >
+                <History />
+              </button>
             )}
           </div>
         </td>
