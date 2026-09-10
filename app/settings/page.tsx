@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 
+import { supabase } from "@/lib/supabase";
+
 import ConsoleShell from "@/components/console-shell";
+
+import BrandForm from "./brand-form";
 
 export const metadata: Metadata = {
   title: "Settings - FreightNudge",
 };
+
+export const dynamic = "force-dynamic";
 
 const NOTIFICATIONS = [
   { id: "notify-email", label: "Email me when a document is uploaded", hint: "Instant notification per submission", enabled: true },
@@ -26,7 +32,28 @@ const NUDGE_STEPS = [
 
 const TONE_OPTIONS = ["Gentle", "Firm", "Urgent"];
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  // Auth is not wired up yet, so "the forwarder" is the first account in the
+  // table (same convention the dashboard's request flow uses).
+  const { data: forwarder, error } = await supabase
+    .from("forwarders")
+    .select("id, name, email, display_name, logo_path")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load the forwarder account:", error);
+  }
+
+  const account = {
+    id: forwarder ? String(forwarder.id) : "",
+    name: forwarder && forwarder.name ? String(forwarder.name) : "Demo Forwarder",
+    email: forwarder && forwarder.email ? String(forwarder.email) : "demo@freightnudge.com",
+    displayName: forwarder?.display_name ? String(forwarder.display_name) : null,
+    logoPath: forwarder?.logo_path ? String(forwarder.logo_path) : null,
+  };
+
   return (
     <ConsoleShell pageName="Settings">
       <section className="intro">
@@ -43,20 +70,20 @@ export default function SettingsPage() {
       <div className="fn-settings-grid">
         <section className="fn-card">
           <h2 className="fn-card-title">Account</h2>
-          <p className="fn-card-sub">This information appears on document request emails.</p>
-          <div className="fn-row-2col mt-5">
-            <div className="fn-field">
-              <label htmlFor="settings-company">Account name</label>
-              <input id="settings-company" type="text" defaultValue="Demo Forwarder" className="fn-input" />
-            </div>
-            <div className="fn-field">
-              <label htmlFor="settings-email">Contact email</label>
-              <input id="settings-email" type="email" defaultValue="demo@freightnudge.com" className="fn-input" />
-            </div>
-          </div>
-          <button type="button" className="cta mt-5">
-            Save account settings
-          </button>
+          <p className="fn-card-sub">This branding appears on the upload pages your clients see.</p>
+          {account.id ? (
+            <BrandForm
+              forwarderId={account.id}
+              accountName={account.name}
+              contactEmail={account.email}
+              displayName={account.displayName}
+              logoPath={account.logoPath}
+            />
+          ) : (
+            <p className="fn-note mt-4">
+              No forwarder account yet — create your first document request to set one up, then come back to add branding.
+            </p>
+          )}
         </section>
 
         <section className="fn-card">

@@ -75,23 +75,56 @@ export default async function UploadPage({ params }: UploadPageProps) {
 
   const statusLabel = typeof requestRecord.status === "string" ? requestRecord.status : "unknown";
 
+  // Resolve the forwarder who owns this request via client → forwarder, so the
+  // upload page can show their branding instead of generic FreightNudge marks.
+  let forwarder = "FreightNudge";
+  let brandLogoUrl: string | null = null;
+
+  if (requestRecord.client_id) {
+    const { data: clientRecord } = await supabase
+      .from("clients")
+      .select("forwarder_id")
+      .eq("id", requestRecord.client_id)
+      .maybeSingle();
+
+    if (clientRecord?.forwarder_id) {
+      const { data: forwarderRecord } = await supabase
+        .from("forwarders")
+        .select("display_name, logo_path")
+        .eq("id", clientRecord.forwarder_id)
+        .maybeSingle();
+
+      if (forwarderRecord?.display_name) {
+        forwarder = String(forwarderRecord.display_name);
+      }
+      if (forwarderRecord?.logo_path) {
+        brandLogoUrl = supabase.storage
+          .from("branding")
+          .getPublicUrl(String(forwarderRecord.logo_path)).data.publicUrl;
+      }
+    }
+  }
+
   return (
     <div className="fn-shell fn-stack">
       <main className="fn-center">
         <div className="fn-card" style={{ maxWidth: 640, width: "100%" }}>
           <div className="brand">
-            <span className="brand-mark">F</span>
+            {brandLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={brandLogoUrl} alt={`${forwarder} logo`} className="brand-logo" />
+            ) : (
+              <span className="brand-mark">{forwarder.charAt(0).toUpperCase()}</span>
+            )}
             <span>
-              <strong>
-                Freight<span>Nudge</span>
-              </strong>
+              <strong>{forwarder}</strong>
               <small>Secure document upload</small>
             </span>
           </div>
 
           <h1 className="fn-card-title" style={{ marginTop: 14 }}>Upload Document</h1>
           <p className="fn-card-sub">
-            A forwarder has requested the following document from you. Please upload it before the deadline.
+            {forwarder} has requested the following document from you. Please upload it before the deadline.
           </p>
 
           <dl className="fn-row-2col" style={{ marginTop: 20 }}>
@@ -115,6 +148,10 @@ export default async function UploadPage({ params }: UploadPageProps) {
           </dl>
 
           <UploadForm requestId={requestRecord.id} />
+
+          <p className="powered-by">
+            Powered by FreightNudge
+          </p>
         </div>
       </main>
     </div>
