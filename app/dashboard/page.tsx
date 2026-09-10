@@ -49,6 +49,10 @@ export default async function DashboardPage() {
       status: row.status,
       downloadUrl,
       rejectionReason: row.rejection_reason ?? null,
+      shipmentId: row.shipment_id ?? null,
+      containerNumber: row.container_number ?? null,
+      blNumber: row.bl_number ?? null,
+      route: row.route ?? null,
     });
   }
 

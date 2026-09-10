@@ -1017,6 +1017,12 @@ body {
   text-overflow: ellipsis;
 }
 
+.fn-shell .shipment-meta {
+  margin-top: 2px;
+  color: #5b6478;
+  letter-spacing: 0.02em;
+}
+
 .fn-shell .doc,
 .fn-shell .channel {
   display: inline-flex;

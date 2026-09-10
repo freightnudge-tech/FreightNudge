@@ -17,6 +17,10 @@ export type DashboardRequest = {
   status: string;
   downloadUrl: string | null;
   rejectionReason: string | null;
+  shipmentId?: string | null;
+  containerNumber?: string | null;
+  blNumber?: string | null;
+  route?: string | null;
 };
 
 export type StatusFilter = "all" | "pending" | "uploaded" | "completed" | "expired" | "rejected";
@@ -93,6 +97,13 @@ export function RequestRow({ request, onExportAudit }: { request: DashboardReque
     }
   }
 
+  const shipmentDetails = [
+    request.shipmentId ? `Shipment ${request.shipmentId}` : null,
+    request.containerNumber ? `Container ${request.containerNumber}` : null,
+    request.blNumber ? `BL ${request.blNumber}` : null,
+    request.route ? `Route ${request.route}` : null,
+  ].filter(Boolean);
+
   const meta = STATUS_TONE[request.status] ?? { label: request.status, tone: "slate" };
   const canReview = request.status === "uploaded";
 
@@ -104,6 +115,9 @@ export function RequestRow({ request, onExportAudit }: { request: DashboardReque
             <span>
               <b>{request.clientName ?? "Unknown client"}</b>
               <small>{request.clientEmail ?? "—"}</small>
+              {shipmentDetails.length > 0 && (
+                <small className="shipment-meta">{shipmentDetails.join(" · ")}</small>
+              )}
             </span>
           </div>
         </td>

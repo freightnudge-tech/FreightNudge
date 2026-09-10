@@ -61,6 +61,9 @@ export default function DashboardConsole({ requests, clients, loadError = false 
   const [otherDocs, setOtherDocs] = useState<string[]>([]);
   const [formDeadline, setFormDeadline] = useState("");
   const [formShipmentId, setFormShipmentId] = useState("");
+  const [formContainerNumber, setFormContainerNumber] = useState("");
+  const [formBlNumber, setFormBlNumber] = useState("");
+  const [formRoute, setFormRoute] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
   function showToast(message: string) {
@@ -89,7 +92,7 @@ export default function DashboardConsole({ requests, clients, loadError = false 
     const q = searchQuery.trim().toLowerCase();
     return requests.filter((request) => {
       const matchesStatus = statusFilter === "all" || request.status === statusFilter;
-      const haystack = `${request.clientName ?? ""} ${request.clientEmail ?? ""} ${request.documentName} ${request.id}`.toLowerCase();
+      const haystack = `${request.clientName ?? ""} ${request.clientEmail ?? ""} ${request.documentName} ${request.id} ${request.shipmentId ?? ""} ${request.containerNumber ?? ""} ${request.blNumber ?? ""} ${request.route ?? ""}`.toLowerCase();
       const matchesSearch = q === "" || haystack.includes(q);
       return matchesStatus && matchesSearch;
     });
@@ -157,6 +160,9 @@ export default function DashboardConsole({ requests, clients, loadError = false 
         clientEmail: isNewClient ? formNewClientEmail.trim() : undefined,
         documentNames,
         deadline: formDeadline,
+        containerNumber: formContainerNumber.trim(),
+        blNumber: formBlNumber.trim(),
+        route: formRoute.trim(),
       });
       if (!result.ok) {
         setCreateError(result.error ?? "Failed to create the document request(s).");
@@ -174,6 +180,10 @@ export default function DashboardConsole({ requests, clients, loadError = false 
       setFormNewClientName("");
       setFormNewClientEmail("");
       setFormDeadline("");
+      setFormShipmentId("");
+      setFormContainerNumber("");
+      setFormBlNumber("");
+      setFormRoute("");
       router.refresh();
     } finally {
       setCreating(false);
@@ -431,6 +441,51 @@ export default function DashboardConsole({ requests, clients, loadError = false 
               className="fn-input mono"
             />
             <span className="fn-field-hint">Groups related documents together in the tracker.</span>
+          </div>
+
+          <div className="fn-field">
+            <label htmlFor="create-container-number">
+              Container number <span className="fn-optional">optional</span>
+            </label>
+            <input
+              id="create-container-number"
+              type="text"
+              value={formContainerNumber}
+              onChange={(event) => setFormContainerNumber(event.target.value)}
+              placeholder="e.g. MSKU1234567"
+              disabled={creating}
+              className="fn-input mono"
+            />
+          </div>
+
+          <div className="fn-field">
+            <label htmlFor="create-bl-number">
+              BL number <span className="fn-optional">optional</span>
+            </label>
+            <input
+              id="create-bl-number"
+              type="text"
+              value={formBlNumber}
+              onChange={(event) => setFormBlNumber(event.target.value)}
+              placeholder="e.g. HLCU1234567"
+              disabled={creating}
+              className="fn-input mono"
+            />
+          </div>
+
+          <div className="fn-field">
+            <label htmlFor="create-route">
+              Route <span className="fn-optional">optional</span>
+            </label>
+            <input
+              id="create-route"
+              type="text"
+              value={formRoute}
+              onChange={(event) => setFormRoute(event.target.value)}
+              placeholder="e.g. Rotterdam → Newark"
+              disabled={creating}
+              className="fn-input"
+            />
           </div>
 
           {createError && <p className="fn-banner-error mt-3.5">{createError}</p>}

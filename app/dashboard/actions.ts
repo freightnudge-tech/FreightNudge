@@ -227,6 +227,9 @@ async function insertRequestsAndNotify(opts: {
   clientId: string;
   documentNames: string[];
   deadline: string;
+  containerNumber?: string;
+  blNumber?: string;
+  route?: string;
 }): Promise<CreateRequestResult> {
   const rows = opts.documentNames.map((documentName) => ({
     client_id: opts.clientId,
@@ -234,6 +237,9 @@ async function insertRequestsAndNotify(opts: {
     deadline: opts.deadline,
     status: "pending",
     upload_link_token: randomUUID(),
+    container_number: opts.containerNumber?.trim() || null,
+    bl_number: opts.blNumber?.trim() || null,
+    route: opts.route?.trim() || null,
   }));
 
   const { error: insertError } = await db()
@@ -343,6 +349,9 @@ export async function createBatchRequests(opts: {
   clientEmail?: string;
   documentNames: string[];
   deadline: string;
+  containerNumber?: string;
+  blNumber?: string;
+  route?: string;
 }): Promise<CreateRequestResult> {
   const documentNames = Array.from(
     new Set(
@@ -363,7 +372,14 @@ export async function createBatchRequests(opts: {
   const trimmedClientId = opts.clientId?.trim() ?? "";
 
   if (trimmedClientId) {
-    return insertRequestsAndNotify({ clientId: trimmedClientId, documentNames, deadline: deadlineIso });
+    return insertRequestsAndNotify({
+      clientId: trimmedClientId,
+      documentNames,
+      deadline: deadlineIso,
+      containerNumber: opts.containerNumber,
+      blNumber: opts.blNumber,
+      route: opts.route,
+    });
   }
 
   const trimmedClientName = opts.clientName?.trim() ?? "";
@@ -411,5 +427,12 @@ export async function createBatchRequests(opts: {
     clientId = String(insertedClient.id);
   }
 
-  return insertRequestsAndNotify({ clientId, documentNames, deadline: deadlineIso });
+  return insertRequestsAndNotify({
+    clientId,
+    documentNames,
+    deadline: deadlineIso,
+    containerNumber: opts.containerNumber,
+    blNumber: opts.blNumber,
+    route: opts.route,
+  });
 }
