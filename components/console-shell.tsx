@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
+  BarChart3,
   Bell,
   ChevronDown,
   FileText,
@@ -40,6 +41,7 @@ const NAV_WORKSPACE: NavItem[] = [
 ];
 
 const NAV_MANAGE: NavItem[] = [
+  { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/admin", label: "Super admin", icon: ShieldCheck },
 ];

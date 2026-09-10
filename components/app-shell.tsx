@@ -64,7 +64,7 @@ function UserMenu() {
           </DropdownMenu.Item>
           <DropdownMenu.Item className={DROPDOWN_ITEM}>
             <Settings className="h-4 w-4 text-neutral-400" />
-            Workspace settings
+            Account settings
           </DropdownMenu.Item>
           <DropdownMenu.Item className={DROPDOWN_ITEM}>
             <LifeBuoy className="h-4 w-4 text-neutral-400" />

@@ -36,17 +36,17 @@ export default function SettingsPage() {
             FreightNudge
           </p>
           <h1>Settings</h1>
-          <p>Manage your workspace profile, notifications and billing preferences.</p>
+          <p>Manage your account settings, notifications and billing preferences.</p>
         </div>
       </section>
 
       <div className="fn-settings-grid">
         <section className="fn-card">
-          <h2 className="fn-card-title">Company profile</h2>
+          <h2 className="fn-card-title">Account</h2>
           <p className="fn-card-sub">This information appears on document request emails.</p>
           <div className="fn-row-2col mt-5">
             <div className="fn-field">
-              <label htmlFor="settings-company">Company name</label>
+              <label htmlFor="settings-company">Account name</label>
               <input id="settings-company" type="text" defaultValue="Demo Forwarder" className="fn-input" />
             </div>
             <div className="fn-field">
@@ -55,7 +55,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <button type="button" className="cta mt-5">
-            Save changes
+            Save account settings
           </button>
         </section>
 
