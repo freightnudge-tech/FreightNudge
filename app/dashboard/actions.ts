@@ -4,24 +4,17 @@ import { randomUUID } from "crypto";
 
 import { Resend } from "resend";
 
-import { supabase } from "@/lib/supabase";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 
 const REJECTION_CYCLE_DAYS = 7;
 
 // Simple RFC-style sanity check for client email input.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Fallback forwarder created automatically when the forwarders table is empty.
-const DEFAULT_FORWARDER = {
-  name: "Demo Forwarder",
-  email: "demo@freightnudge.com",
-};
-
-// Server actions always run on the server, so prefer the service-role client
-// (bypasses RLS) when it is configured; otherwise fall back to the anon key.
-function db() {
-  return supabaseAdmin ?? supabase;
+// Server actions run inside the request context, so use the cookie-bound
+// client to act as the authenticated forwarder.
+async function db() {
+  return await createClient();
 }
 
 type ClientInfo = {
@@ -30,7 +23,7 @@ type ClientInfo = {
 };
 
 async function getClientEmailAndName(clientId: string): Promise<ClientInfo | null> {
-  const { data, error } = await db()
+  const { data, error } = await (await db())
     .from("clients")
     .select("email, name")
     .eq("id", clientId)
@@ -134,6 +127,7 @@ async function sendRequestEmail(opts: {
 }
 
 export async function approveRequest(requestId: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = await db();
   const { error } = await supabase
     .from("document_requests")
     .update({ status: "completed" })
@@ -151,6 +145,7 @@ export async function rejectRequest(
   requestId: string,
   rejectionReason: string,
 ): Promise<{ ok: boolean; error?: string; email?: { sent: boolean; reason?: string } }> {
+  const supabase = await db();
   const { data: request, error: fetchError } = await supabase
     .from("document_requests")
     .select("client_id, document_name")
@@ -242,7 +237,7 @@ async function insertRequestsAndNotify(opts: {
     route: opts.route?.trim() || null,
   }));
 
-  const { error: insertError } = await db()
+  const { error: insertError } = await (await db())
     .from("document_requests")
     .insert(rows);
 
@@ -275,69 +270,24 @@ async function insertRequestsAndNotify(opts: {
   };
 }
 
-// Auth is not wired up yet, so new clients are linked to the first forwarder
-// record. If no forwarder exists at all, a default one is upserted
-// automatically and its id is returned.
+// Resolve the authenticated forwarder via the session (forwarders.user_id).
 async function resolveForwarderId(): Promise<string | null> {
-  const client = db();
+  const client = await db();
 
-  // 1) Reuse an existing forwarder when one is present.
-  const existingId = await lookupFirstForwarderId();
-  if (existingId) {
-    return existingId;
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return null;
   }
 
-  // 2) None found - upsert the default forwarder. The unique email constraint
-  // makes this safe under concurrent requests: a second caller updates the
-  // same row instead of failing.
-  const { data: upserted, error: upsertError } = await client
-    .from("forwarders")
-    .upsert(DEFAULT_FORWARDER, { onConflict: "email" })
-    .select("id")
-    .single();
-
-  if (upserted?.id) {
-    console.log("Ensured default forwarder:", DEFAULT_FORWARDER.email);
-    return String(upserted.id);
-  }
-
-  // 3) Upsert failed (for example a missing unique constraint or RLS).
-  //    Try a plain insert, then a final lookup before giving up.
-  console.warn("Default forwarder upsert failed, retrying with insert:", upsertError);
-
-  const { data: inserted, error: insertError } = await client
-    .from("forwarders")
-    .insert(DEFAULT_FORWARDER)
-    .select("id")
-    .single();
-
-  if (inserted?.id) {
-    console.log("Created default forwarder:", DEFAULT_FORWARDER.email);
-    return String(inserted.id);
-  }
-  if (insertError) {
-    console.error("Failed to create the default forwarder:", insertError);
-  }
-
-  const retriedId = await lookupFirstForwarderId();
-  if (!retriedId) {
-    console.error(
-      "Forwarder resolution failed. If SUPABASE_SERVICE_ROLE_KEY is not set, add RLS insert/select policies for the forwarders table.",
-    );
-  }
-  return retriedId;
-}
-
-async function lookupFirstForwarderId(): Promise<string | null> {
-  const { data, error } = await db()
+  const { data, error } = await client
     .from("forwarders")
     .select("id")
-    .order("created_at", { ascending: true })
+    .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error("Failed to look up a forwarder:", error);
+    console.error("Failed to look up the forwarder for the session:", error);
     return null;
   }
   return data ? String(data.id) : null;
@@ -397,7 +347,7 @@ export async function createBatchRequests(opts: {
   }
 
   // Reuse the existing client if the email is already registered.
-  const { data: existingClient } = await db()
+  const { data: existingClient } = await (await db())
     .from("clients")
     .select("id")
     .eq("email", trimmedClientEmail)
@@ -409,7 +359,7 @@ export async function createBatchRequests(opts: {
   if (typeof existingId === "string" && existingId.length > 0) {
     clientId = existingId;
   } else {
-    const { data: insertedClient, error: clientInsertError } = await db()
+    const { data: insertedClient, error: clientInsertError } = await (await db())
       .from("clients")
       .insert({
         forwarder_id: forwarderId,

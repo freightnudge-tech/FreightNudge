@@ -1,19 +1,23 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 
-// Server actions run on the server, so prefer the service-role client
-// (bypasses RLS) when configured; otherwise fall back to the anon key.
-function db() {
-  return supabaseAdmin ?? supabase;
+async function db() {
+  return await createClient();
 }
 
 async function resolveForwarderId(): Promise<string | null> {
-  const { data, error } = await db()
+  const client = await db();
+
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return null;
+  }
+
+  const { data, error } = await client
     .from("forwarders")
     .select("id")
-    .order("created_at", { ascending: true })
+    .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
 
@@ -32,7 +36,7 @@ export async function saveBranding(opts: {
   if (!forwarderId) {
     return {
       ok: false,
-      error: "No forwarder account found yet. Create your first document request to set one up.",
+      error: "Your account isn't linked to a forwarder yet. Please contact support.",
     };
   }
 
@@ -43,7 +47,7 @@ export async function saveBranding(opts: {
 
   const logoPath = opts.logoPath?.trim() || null;
 
-  const { error } = await db()
+  const { error } = await (await db())
     .from("forwarders")
     .update({ display_name: displayName, logo_path: logoPath })
     .eq("id", forwarderId);

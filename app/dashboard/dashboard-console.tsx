@@ -16,7 +16,7 @@ import {
   Zap,
 } from "lucide-react";
 
-import ConsoleShell from "@/components/console-shell";
+import ConsoleShell, { type ShellAccount } from "@/components/console-shell";
 import { Badge, Metric } from "@/components/console-bits";
 import { RequestRow, STATUS_FILTERS, type DashboardRequest, type StatusFilter } from "@/components/request-row";
 
@@ -33,6 +33,8 @@ type ConsoleProps = {
   requests: DashboardRequest[];
   clients: ClientOption[];
   loadError?: boolean;
+  isAdmin?: boolean;
+  account?: ShellAccount;
 };
 
 const PRESET_DOCUMENTS = ["Invoice", "Packing List", "VGM"];
@@ -42,7 +44,7 @@ const SPARK_OPEN = [30, 40, 35, 53, 46, 61, 57, 72, 65, 82];
 const SPARK_UP = [45, 42, 58, 55, 68, 64, 72, 78, 85, 91];
 const SPARK_DOWN = [84, 78, 73, 68, 60, 55, 49, 45, 38, 32];
 
-export default function DashboardConsole({ requests, clients, loadError = false }: ConsoleProps) {
+export default function DashboardConsole({ requests, clients, loadError = false, isAdmin = false, account }: ConsoleProps) {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -531,6 +533,8 @@ export default function DashboardConsole({ requests, clients, loadError = false 
     <ConsoleShell
       pageName="Command center"
       searchValue={searchQuery}
+      isAdmin={isAdmin}
+      account={account}
       onSearchChange={setSearchQuery}
       counts={{ requests: counts.total, clients: clients.length, pending: counts.pending }}
       onHealthAction={scrollToTracker}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import type { DashboardRequest } from "@/components/request-row";
 
 import RequestsClient from "./requests-client";
@@ -12,16 +14,27 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function RequestsPage() {
+  const supabase = await createClient();
+  const { forwarder } = await requireAuth(supabase);
+
+  if (!forwarder) {
+    redirect("/settings");
+  }
+
   const { data: rows, error } = await supabase
     .from("document_requests")
     .select("*, clients(name, email)")
+    .eq("clients.forwarder_id", forwarder.id)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Failed to load document requests:", error);
   }
 
-  const { data: clientRows } = await supabase.from("clients").select("id");
+  const { data: clientRows } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("forwarder_id", forwarder.id);
 
   const requests: DashboardRequest[] = [];
 
@@ -56,6 +69,8 @@ export default async function RequestsPage() {
       requests={requests}
       clientsCount={(clientRows ?? []).length}
       loadError={Boolean(error)}
+      isAdmin={forwarder?.isAdmin ?? false}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
     />
   );
 }

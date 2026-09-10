@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+
 import ConsoleShell from "@/components/console-shell";
 import { Metric } from "@/components/console-bits";
 
@@ -13,11 +16,18 @@ const SPARK_UP = [35, 42, 48, 55, 60, 68, 72, 78, 85, 91];
 const SPARK_DOWN = [90, 82, 75, 68, 60, 52, 45, 38, 32, 28];
 const SPARK_FLAT = [50, 52, 48, 51, 53, 49, 52, 50, 51, 53];
 
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const supabase = await createClient();
+  const { forwarder } = await requireAuth(supabase);
+
   const todayLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 
   return (
-    <ConsoleShell pageName="Reports">
+    <ConsoleShell
+      pageName="Reports"
+      isAdmin={forwarder?.isAdmin ?? false}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
+    >
       <section className="intro">
         <div>
           <p className="kicker">

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 import { saveBranding } from "./actions";
 
@@ -32,7 +32,7 @@ export default function BrandForm({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const currentLogoUrl = logoPath
-    ? supabase.storage.from("branding").getPublicUrl(logoPath).data.publicUrl
+    ? supabaseBrowser.storage.from("branding").getPublicUrl(logoPath).data.publicUrl
     : null;
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -59,7 +59,7 @@ export default function BrandForm({
         const extension = safeName.split(".").pop()?.toLowerCase() || "png";
         const storagePath = `forwarders/${forwarderId}/logo.${extension}`;
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabaseBrowser.storage
           .from("branding")
           .upload(storagePath, selectedFile, { upsert: true });
 
@@ -142,7 +142,7 @@ export default function BrandForm({
           disabled={saving}
           className="fn-input"
         />
-        <span className="fn-field-hint">Shown to clients on upload pages. Defaults to your account name.</span>
+        <span className="fn-field-hint">Shown to clients on upload pages. Defaults to your company name.</span>
       </div>
 
       <div className="fn-field">

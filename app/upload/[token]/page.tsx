@@ -88,8 +88,11 @@ export default async function UploadPage({ params }: UploadPageProps) {
       .maybeSingle();
 
     if (clientRecord?.forwarder_id) {
+      // Reads the forwarder_branding view (id, display_name, logo_path) rather
+      // than the base table: this page is viewed by anonymous visitors, and
+      // the view is the only publicly readable surface for branding data.
       const { data: forwarderRecord } = await supabase
-        .from("forwarders")
+        .from("forwarder_branding")
         .select("display_name, logo_path")
         .eq("id", clientRecord.forwarder_id)
         .maybeSingle();

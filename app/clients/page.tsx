@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 import ClientsClient from "./clients-client";
 
@@ -11,26 +13,33 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
-  const [clientsRes, forwardersRes, requestsRes] = await Promise.all([
-    supabase.from("clients").select("id, name, email, forwarder_id").order("name", { ascending: true }),
-    supabase.from("forwarders").select("id, name").order("name", { ascending: true }),
-    supabase.from("document_requests").select("id, client_id, status"),
+  const supabase = await createClient();
+  const { forwarder } = await requireAuth(supabase);
+
+  if (!forwarder) {
+    redirect("/settings");
+  }
+
+  const [clientsRes, requestsRes] = await Promise.all([
+    supabase
+      .from("clients")
+      .select("id, name, email, forwarder_id")
+      .eq("forwarder_id", forwarder.id)
+      .order("name", { ascending: true }),
+    supabase
+      .from("document_requests")
+      .select("id, client_id, status, clients(forwarder_id)")
+      .eq("clients.forwarder_id", forwarder.id),
   ]);
 
   if (clientsRes.error) {
     console.error("Failed to load clients:", clientsRes.error);
   }
-  if (forwardersRes.error) {
-    console.error("Failed to load forwarders:", forwardersRes.error);
-  }
   if (requestsRes.error) {
     console.error("Failed to load request counts:", requestsRes.error);
   }
 
-  const forwarderNames = new Map<string, string>();
-  for (const forwarder of forwardersRes.data ?? []) {
-    forwarderNames.set(String(forwarder.id), String(forwarder.name));
-  }
+  const forwarderNames = new Map<string, string>([[forwarder.id, forwarder.name]]);
 
   const requestCounts = new Map<string, number>();
   let pendingCount = 0;
@@ -50,10 +59,7 @@ export default async function ClientsPage() {
     requestCount: requestCounts.get(String(client.id)) ?? 0,
   }));
 
-  const forwarders = (forwardersRes.data ?? []).map((forwarder) => ({
-    id: String(forwarder.id),
-    name: String(forwarder.name),
-  }));
+  const forwarders = [{ id: forwarder.id, name: forwarder.name }];
 
   return (
     <ClientsClient
@@ -62,6 +68,8 @@ export default async function ClientsPage() {
       requestsTotal={(requestsRes.data ?? []).length}
       pendingCount={pendingCount}
       loadError={Boolean(clientsRes.error)}
+      isAdmin={forwarder?.isAdmin ?? false}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
     />
   );
 }

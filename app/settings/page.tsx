@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { supabase } from "@/lib/supabase";
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 import ConsoleShell from "@/components/console-shell";
 
@@ -33,29 +34,28 @@ const NUDGE_STEPS = [
 const TONE_OPTIONS = ["Gentle", "Firm", "Urgent"];
 
 export default async function SettingsPage() {
-  // Auth is not wired up yet, so "the forwarder" is the first account in the
-  // table (same convention the dashboard's request flow uses).
-  const { data: forwarder, error } = await supabase
-    .from("forwarders")
-    .select("id, name, email, display_name, logo_path")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const supabase = await createClient();
+  const { forwarder } = await requireAuth(supabase);
 
-  if (error) {
-    console.error("Failed to load the forwarder account:", error);
-  }
+  // Refresh the row so branding (display_name / logo_path) is current.
+  const { data: fw } = forwarder
+    ? await supabase.from("forwarders").select("id, name, email, display_name, logo_path").eq("id", forwarder.id).maybeSingle()
+    : { data: null };
 
   const account = {
-    id: forwarder ? String(forwarder.id) : "",
-    name: forwarder && forwarder.name ? String(forwarder.name) : "Demo Forwarder",
-    email: forwarder && forwarder.email ? String(forwarder.email) : "demo@freightnudge.com",
-    displayName: forwarder?.display_name ? String(forwarder.display_name) : null,
-    logoPath: forwarder?.logo_path ? String(forwarder.logo_path) : null,
+    id: fw ? String(fw.id) : forwarder?.id ?? "",
+    name: fw && fw.name ? String(fw.name) : forwarder?.name ?? "Demo Forwarder",
+    email: fw && fw.email ? String(fw.email) : forwarder?.email ?? "demo@freightnudge.com",
+    displayName: fw?.display_name ? String(fw.display_name) : null,
+    logoPath: fw?.logo_path ? String(fw.logo_path) : null,
   };
 
   return (
-    <ConsoleShell pageName="Settings">
+    <ConsoleShell
+      pageName="Settings"
+      isAdmin={forwarder?.isAdmin ?? false}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
+    >
       <section className="intro">
         <div>
           <p className="kicker">

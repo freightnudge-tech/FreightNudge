@@ -46,6 +46,11 @@ const NAV_MANAGE: NavItem[] = [
   { href: "/admin", label: "Super admin", icon: ShieldCheck },
 ];
 
+export type ShellAccount = {
+  name: string;
+  email: string;
+};
+
 type ConsoleShellProps = {
   children: ReactNode;
   pageName: string;
@@ -54,7 +59,28 @@ type ConsoleShellProps = {
   counts?: ConsoleCounts;
   onHealthAction?: () => void;
   healthActionLabel?: string;
+  // Hides the "Super admin" nav link unless the signed-in forwarder is a
+  // platform admin (forwarders.is_admin = true).
+  isAdmin?: boolean;
+  // Real signed-in forwarder (display name / company name + email) shown in
+  // the workspace selector, profile row and top avatar.
+  account?: ShellAccount;
 };
+
+function initialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "FN";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function initialsFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "";
+  const parts = local.split(/[._-]+/).filter(Boolean);
+  if (parts.length === 0) return "FN";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
 
 export default function ConsoleShell({
   children,
@@ -64,12 +90,21 @@ export default function ConsoleShell({
   counts,
   onHealthAction,
   healthActionLabel,
+  isAdmin = false,
+  account,
 }: ConsoleShellProps) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const workspaceName = account?.name?.trim() || "Your workspace";
+  const workspaceInitials = account ? initialsFromName(workspaceName) : "FN";
+  const profileEmail = account?.email?.trim() || "";
+  const profileInitials = profileEmail ? initialsFromEmail(profileEmail) : workspaceInitials;
+
   function renderNav(items: NavItem[]) {
-    return items.map((item) => {
+    return items
+      .filter((item) => item.href !== "/admin" || isAdmin)
+      .map((item) => {
       const Icon = item.icon;
       const count = item.countKey && counts ? counts[item.countKey] : undefined;
       return (
@@ -98,9 +133,9 @@ export default function ConsoleShell({
           </button>
         </div>
         <button type="button" className="workspace">
-          <span className="avatar">NL</span>
+          <span className="avatar">{workspaceInitials}</span>
           <span>
-            <b>Nordwind Logistics</b>
+            <b>{workspaceName}</b>
             <small>Operations team</small>
           </span>
           <ChevronDown />
@@ -129,10 +164,10 @@ export default function ConsoleShell({
             )}
           </div>
           <div className="profile">
-            <span className="avatar">AT</span>
+            <span className="avatar">{profileInitials}</span>
             <span>
-              <b>Alex Tran</b>
-              <small>alex@nordwind.io</small>
+              <b>{profileEmail || workspaceName}</b>
+              <small>{profileEmail ? "Forwarder account" : "Sign in to sync your account"}</small>
             </span>
             <MoreHorizontal />
           </div>
@@ -173,7 +208,7 @@ export default function ConsoleShell({
               <Bell />
               <i />
             </button>
-            <span className="top-avatar">AT</span>
+            <span className="top-avatar">{profileInitials}</span>
           </div>
         </header>
 

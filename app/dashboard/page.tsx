@@ -1,13 +1,24 @@
-import { supabase } from "@/lib/supabase";
+import { redirect } from "next/navigation";
+
+import { requireAuth } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 import DashboardConsole, { type ClientOption, type DashboardRequest } from "./dashboard-console";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { forwarder } = await requireAuth(supabase);
+
+  if (!forwarder) {
+    redirect("/settings");
+  }
+
   const { data: rows, error } = await supabase
     .from("document_requests")
     .select("*, clients(name, email)")
+    .eq("clients.forwarder_id", forwarder.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -17,6 +28,7 @@ export default async function DashboardPage() {
   const { data: clientRows, error: clientsError } = await supabase
     .from("clients")
     .select("id, name")
+    .eq("forwarder_id", forwarder.id)
     .order("name", { ascending: true });
 
   if (clientsError) {
@@ -56,5 +68,13 @@ export default async function DashboardPage() {
     });
   }
 
-  return <DashboardConsole requests={requests} clients={clients} loadError={Boolean(error)} />;
+  return (
+    <DashboardConsole
+      requests={requests}
+      clients={clients}
+      loadError={Boolean(error)}
+      isAdmin={forwarder?.isAdmin ?? false}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
+    />
+  );
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 
-import ConsoleShell from "@/components/console-shell";
+import ConsoleShell, { type ShellAccount } from "@/components/console-shell";
 
 import { createClient } from "./actions";
 
@@ -27,6 +27,8 @@ type ClientsProps = {
   requestsTotal: number;
   pendingCount: number;
   loadError?: boolean;
+  isAdmin?: boolean;
+  account?: ShellAccount;
 };
 
 export default function ClientsClient({
@@ -35,6 +37,8 @@ export default function ClientsClient({
   requestsTotal,
   pendingCount,
   loadError = false,
+  isAdmin = false,
+  account,
 }: ClientsProps) {
   const router = useRouter();
   const [createOpen, setCreateOpen] = useState(false);
@@ -85,6 +89,8 @@ export default function ClientsClient({
     <ConsoleShell
       pageName="Clients"
       counts={{ requests: requestsTotal, clients: clients.length, pending: pendingCount }}
+      isAdmin={isAdmin}
+      account={account}
     >
       {loadError && (
         <div className="fn-banner-error">Failed to load clients. Please check the database setup.</div>

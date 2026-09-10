@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 
+import { requireAdmin } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+
 import ConsoleShell from "@/components/console-shell";
 import { Metric } from "@/components/console-bits";
 
@@ -44,9 +47,16 @@ const METRICS = [
   },
 ];
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const supabase = await createClient();
+  const { forwarder } = await requireAdmin(supabase);
+
   return (
-    <ConsoleShell pageName="Super admin">
+    <ConsoleShell
+      pageName="Super admin"
+      isAdmin={forwarder?.isAdmin ?? true}
+      account={forwarder ? { name: forwarder.displayName ?? forwarder.name, email: forwarder.email } : undefined}
+    >
       <section className="intro">
         <div>
           <p className="kicker">

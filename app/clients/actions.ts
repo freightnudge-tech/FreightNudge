@@ -1,22 +1,12 @@
 "use server";
 
-import { supabase } from "@/lib/supabase";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient as createSupabaseClient } from "@/lib/supabase/server";
 
 // Simple RFC-style sanity check for client email input.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Fallback forwarder created automatically when the forwarders table is empty
-// (same behavior as the dashboard's document request flow).
-const DEFAULT_FORWARDER = {
-  name: "Demo Forwarder",
-  email: "demo@freightnudge.com",
-};
-
-// Server actions always run on the server, so prefer the service-role client
-// (bypasses RLS) when it is configured; otherwise fall back to the anon key.
-function db() {
-  return supabaseAdmin ?? supabase;
+async function db() {
+  return await createSupabaseClient();
 }
 
 export type CreateClientResult = {
@@ -40,43 +30,31 @@ export async function createClient(opts: {
     return { ok: false, error: "A valid client email is required." };
   }
 
-  const client = db();
+  const client = await db();
+
+  // Authenticated forwarder only — a user can never assign a client to
+  // another forwarder, even if a forwarderId is passed in the payload.
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "You must be logged in to create a client." };
+  }
+
+  const { data: forwarderRow, error: forwarderError } = await client
+    .from("forwarders")
+    .select("id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (forwarderError || !forwarderRow) {
+    return { ok: false, error: "No forwarder account is linked to your login." };
+  }
+  const forwarderId = String(forwarderRow.id);
 
   // Reuse the client when the email is already registered.
   const { data: existing } = await client.from("clients").select("id").eq("email", email).maybeSingle();
   if (existing?.id) {
     return { ok: false, error: "A client with this email already exists." };
-  }
-
-  // Resolve the forwarder: the one picked in the form, otherwise the first
-  // available record, otherwise ensure the default forwarder exists.
-  let forwarderId = opts.forwarderId?.trim() ?? "";
-
-  if (!forwarderId) {
-    const { data: firstForwarder } = await client
-      .from("forwarders")
-      .select("id")
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    forwarderId = firstForwarder?.id ? String(firstForwarder.id) : "";
-  }
-
-  if (!forwarderId) {
-    const { data: upserted, error: upsertError } = await client
-      .from("forwarders")
-      .upsert(DEFAULT_FORWARDER, { onConflict: "email" })
-      .select("id")
-      .single();
-
-    if (upserted?.id) {
-      console.log("Ensured default forwarder:", DEFAULT_FORWARDER.email);
-      forwarderId = String(upserted.id);
-    } else {
-      console.error("Failed to ensure the default forwarder:", upsertError);
-      return { ok: false, error: "Failed to resolve the forwarder account." };
-    }
   }
 
   const { data: inserted, error: insertError } = await client

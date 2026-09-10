@@ -3,16 +3,18 @@
 import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 
-import ConsoleShell from "@/components/console-shell";
+import ConsoleShell, { type ShellAccount } from "@/components/console-shell";
 import { RequestRow, STATUS_FILTERS, type DashboardRequest, type StatusFilter } from "@/components/request-row";
 
 type RequestsProps = {
   requests: DashboardRequest[];
   clientsCount: number;
   loadError?: boolean;
+  isAdmin?: boolean;
+  account?: ShellAccount;
 };
 
-export default function RequestsClient({ requests, clientsCount, loadError = false }: RequestsProps) {
+export default function RequestsClient({ requests, clientsCount, loadError = false, isAdmin = false, account }: RequestsProps) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [toast, setToast] = useState<string | null>(null);
 
@@ -49,6 +51,8 @@ export default function RequestsClient({ requests, clientsCount, loadError = fal
     <ConsoleShell
       pageName="Requests"
       counts={{ requests: requests.length, clients: clientsCount, pending: counts.pending }}
+      isAdmin={isAdmin}
+      account={account}
     >
       {loadError && (
         <div className="fn-banner-error">Failed to load document requests. Please check the database setup.</div>
