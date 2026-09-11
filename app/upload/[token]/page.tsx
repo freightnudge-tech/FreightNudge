@@ -30,14 +30,28 @@ function getStatusTone(status: string): string {
   return "slate";
 }
 
+type UploadRequestRow = {
+  request_id: string;
+  document_name: string;
+  deadline: string | null;
+  status: string;
+  opened_at: string | null;
+  client_id: string;
+  client_name: string | null;
+  client_email: string | null;
+  forwarder_id: string;
+  forwarder_display_name: string | null;
+  forwarder_logo_path: string | null;
+};
+
 export default async function UploadPage({ params }: UploadPageProps) {
   const { token } = await params;
 
-  const { data: requestRecord, error } = await supabase
-    .from("document_requests")
-    .select("*")
-    .eq("upload_link_token", token)
-    .maybeSingle();
+  // Token-matched SECURITY DEFINER RPC: anonymous visitors can only read the
+  // single request their link token points at — never the table at large.
+  // get_upload_request has LIMIT 1, so the result is a 0/1-row array.
+  const { data: rpcData, error } = await supabase.rpc("get_upload_request", { p_token: token });
+  const requestRecord = (rpcData as UploadRequestRow[] | null)?.[0] ?? null;
 
   if (error) {
     console.error("Failed to fetch document request:", error);
@@ -57,56 +71,30 @@ export default async function UploadPage({ params }: UploadPageProps) {
     notFound();
   }
 
-  // When the link is opened for the first time, timestamp the open so the forwarder
-  // can see whether (and when) the client viewed the request.
-  if (!requestRecord.opened_at) {
+  // When the link is opened for the first time, timestamp the open so the
+  // forwarder can see whether (and when) the client viewed the request.
+  // Matched by token via RPC — no direct anonymous UPDATE exists on the table.
+  const { error: openError } = await supabase
+    .rpc("mark_upload_opened", { p_token: token });
 
-    const { error: openError } = await supabase
-      .from("document_requests")
-      .update({ opened_at: new Date().toISOString() })
-      .eq("id", requestRecord.id);
-
-    if (openError) {
-      console.error("Failed to record link open:", openError);
-    }
+  if (openError) {
+    console.error("Failed to record link open:", openError);
   }
 
   const deadlineLabel = requestRecord.deadline ? formatDeadline(requestRecord.deadline) : "Not set";
 
   const statusLabel = typeof requestRecord.status === "string" ? requestRecord.status : "unknown";
 
-  // Resolve the forwarder who owns this request via client → forwarder, so the
-  // upload page can show their branding instead of generic FreightNudge marks.
-  let forwarder = "FreightNudge";
-  let brandLogoUrl: string | null = null;
-
-  if (requestRecord.client_id) {
-    const { data: clientRecord } = await supabase
-      .from("clients")
-      .select("forwarder_id")
-      .eq("id", requestRecord.client_id)
-      .maybeSingle();
-
-    if (clientRecord?.forwarder_id) {
-      // Reads the forwarder_branding view (id, display_name, logo_path) rather
-      // than the base table: this page is viewed by anonymous visitors, and
-      // the view is the only publicly readable surface for branding data.
-      const { data: forwarderRecord } = await supabase
-        .from("forwarder_branding")
-        .select("display_name, logo_path")
-        .eq("id", clientRecord.forwarder_id)
-        .maybeSingle();
-
-      if (forwarderRecord?.display_name) {
-        forwarder = String(forwarderRecord.display_name);
-      }
-      if (forwarderRecord?.logo_path) {
-        brandLogoUrl = supabase.storage
-          .from("branding")
-          .getPublicUrl(String(forwarderRecord.logo_path)).data.publicUrl;
-      }
-    }
-  }
+  // Branding comes straight from the RPC result (joined server-side), so this
+  // page performs exactly one anonymous read for the whole render.
+  const forwarder = requestRecord.forwarder_display_name
+    ? String(requestRecord.forwarder_display_name)
+    : "FreightNudge";
+  const brandLogoUrl = requestRecord.forwarder_logo_path
+    ? supabase.storage
+        .from("branding")
+        .getPublicUrl(String(requestRecord.forwarder_logo_path)).data.publicUrl
+    : null;
 
   return (
     <div className="fn-shell fn-stack">
@@ -150,7 +138,7 @@ export default async function UploadPage({ params }: UploadPageProps) {
             </div>
           </dl>
 
-          <UploadForm requestId={requestRecord.id} />
+          <UploadForm requestId={requestRecord.request_id} token={token} />
 
           <p className="powered-by">
             Powered by FreightNudge

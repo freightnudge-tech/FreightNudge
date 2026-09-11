@@ -6,9 +6,10 @@ import { supabase } from "@/lib/supabase";
 
 type UploadFormProps = {
   requestId: string;
+  token: string;
 };
 
-export default function UploadForm({ requestId }: UploadFormProps) {
+export default function UploadForm({ requestId, token }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,13 +46,17 @@ export default function UploadForm({ requestId }: UploadFormProps) {
         throw new Error(uploadError.message ?? "Failed to upload the document.");
       }
 
-      const { error: updateError } = await supabase
-        .from("document_requests")
-        .update({ status: "uploaded", upload_path: storagePath })
-        .eq("id", requestId);
+      // Submit is token-matched (SECURITY DEFINER RPC): the status flip only
+      // succeeds for the request this upload link points at, and only from
+      // pending/expired. There is deliberately no anonymous UPDATE policy on
+      // the document_requests table itself.
+      const { error: submitError } = await supabase.rpc("submit_upload", {
+        p_token: token,
+        p_file_path: storagePath,
+      });
 
-      if (updateError) {
-        throw new Error(updateError.message ?? "Failed to update the request status.");
+      if (submitError) {
+        throw new Error(submitError.message ?? "Failed to update the request status.");
       }
 
       setSuccessMessage("Your document has been uploaded successfully. Thank you!");

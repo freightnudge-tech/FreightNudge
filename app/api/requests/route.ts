@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 type CreateRequestBody = {
   client_id: string;
@@ -16,7 +16,10 @@ type ClientInfo = {
   email: string;
 };
 
-async function fetchClient(clientId: string): Promise<{ client: ClientInfo | null; error: string | null }> {
+async function fetchClient(
+  supabase: NonNullable<typeof supabaseAdmin>,
+  clientId: string,
+): Promise<{ client: ClientInfo | null; error: string | null }> {
   const { data, error } = await supabase
     .from("clients")
     .select("name, email")
@@ -82,6 +85,20 @@ export async function POST(request: Request) {
     );
   }
 
+  // This route runs on the server and is the trust boundary for request
+  // creation, so it uses the service-role client: under RLS there is no
+  // anonymous policy that could insert document_requests or read arbitrary
+  // clients (by design — that would let anyone forge requests). Checked
+  // after input validation so malformed input still returns a clean 400.
+  if (!supabaseAdmin) {
+    console.error("SUPABASE_SERVICE_ROLE_KEY is not configured; cannot create document requests.");
+    return NextResponse.json(
+      { error: "Server is not configured for request creation" },
+      { status: 500 },
+    );
+  }
+  const supabase = supabaseAdmin;
+
   const upload_link_token = randomUUID();
 
   const { data: createdRequest, error: insertError } = await supabase
@@ -104,7 +121,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { client, error: clientError } = await fetchClient(client_id);
+  const { client, error: clientError } = await fetchClient(supabase, client_id);
 
   if (!client) {
     return NextResponse.json(

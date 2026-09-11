@@ -9,5 +9,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  // Page routes only — API routes are excluded because they enforce their own
+  // trust boundaries (service-role intake route, token-scoped endpoints) and
+  // must answer with JSON, never a login redirect.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };
