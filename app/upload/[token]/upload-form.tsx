@@ -38,9 +38,14 @@ export default function UploadForm({ requestId, token }: UploadFormProps) {
     setSuccessMessage(null);
 
     try {
+      // No `upsert: true` here: the timestamped filename keeps paths unique, and
+      // upsert compiles to INSERT … ON CONFLICT DO UPDATE, whose UPDATE branch
+      // needs an anon UPDATE policy on storage.objects that must not exist
+      // (uploads are immutable once written) — the statement is rejected with
+      // "new row violates row-level security policy" even when nothing conflicts.
       const { error: uploadError } = await supabase.storage
         .from("documents")
-        .upload(storagePath, file, { upsert: true });
+        .upload(storagePath, file);
 
       if (uploadError) {
         throw new Error(uploadError.message ?? "Failed to upload the document.");
